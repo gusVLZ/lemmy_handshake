@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lemmy_account_sync/add_account.dart';
-import 'package:lemmy_account_sync/model/account_details.dart';
+import 'package:lemmy_account_sync/model/account.dart';
+import 'package:lemmy_account_sync/repository/account_repo.dart';
 import 'package:lemmy_account_sync/util/db.dart';
 import 'package:lemmy_account_sync/widgets/account_item.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -24,15 +25,16 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
           primarySwatch: Colors.green,
         ),
-        home: const MyHomePage(title: 'Lemmy Account Sync'),
-        routes: {"add_account": (context) => const AddAccount()});
+        home: const MyHomePage(),
+        routes: {
+          "home": (context) => const MyHomePage(),
+          "add_account": (context) => const AddAccount()
+        });
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
+  const MyHomePage({super.key});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -40,18 +42,25 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final Db _dbHelper = Db();
-  List<AccountDetails> accounts = [];
+  List<Account> accounts = [];
 
   void _addAccount() {
     Navigator.of(context).pushNamed("add_account");
   }
 
+  void refreshAccounts() {
+    _dbHelper.startDatabase().then((dbConnection) => {
+          AccountRepo(dbConnection: dbConnection).getAccounts().then((accs) {
+            setState(() {
+              accounts = accs;
+            });
+          })
+        });
+  }
+
   @override
   void initState() {
-    _dbHelper.startDatabase();
-    // TODO: buscar contas cadastradas localmente e popular obj contas
-
-    accounts.add(AccountDetails(
+    accounts.add(Account(
         accountId: "accountId",
         username: "username",
         instance: "instance",
@@ -59,6 +68,7 @@ class _MyHomePageState extends State<MyHomePage> {
         profileUrl:
             "https://user-images.githubusercontent.com/7890201/114214731-50e82780-992a-11eb-9e64-0397c2527b29.png"));
 
+    refreshAccounts();
     super.initState();
   }
 
@@ -66,7 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: const Text("Lemmy Account Sync"),
       ),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
@@ -80,7 +90,10 @@ class _MyHomePageState extends State<MyHomePage> {
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: accounts
-                    .map((e) => AccountItem(accountDetails: e))
+                    .map((e) => AccountItem(
+                          account: e,
+                          onDelete: refreshAccounts,
+                        ))
                     .toList(),
               ),
       )),

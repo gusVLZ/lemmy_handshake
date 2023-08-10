@@ -1,9 +1,9 @@
-import 'package:logger/logger.dart' as logLib;
+import 'package:logger/logger.dart' as log_lib;
 
 class Logger {
-  static final logLib.Logger logger = logLib.Logger(
-    level: logLib.Level.verbose, // Adjust the log level as needed
-    printer: logLib.PrettyPrinter(), // Use PrettyPrinter for formatted output
+  static final log_lib.Logger logger = log_lib.Logger(
+    level: log_lib.Level.verbose, // Adjust the log level as needed
+    printer: log_lib.PrettyPrinter(), // Use PrettyPrinter for formatted output
   );
 
   static void error(String message) {
