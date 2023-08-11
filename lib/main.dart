@@ -3,6 +3,7 @@ import 'package:lemmy_account_sync/add_account.dart';
 import 'package:lemmy_account_sync/model/account.dart';
 import 'package:lemmy_account_sync/repository/account_repo.dart';
 import 'package:lemmy_account_sync/util/db.dart';
+import 'package:lemmy_account_sync/util/sync_motor.dart';
 import 'package:lemmy_account_sync/widgets/account_item.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -50,7 +51,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void refreshAccounts() {
     _dbHelper.startDatabase().then((dbConnection) => {
-          AccountRepo(dbConnection: dbConnection).getAccounts().then((accs) {
+          AccountRepo(dbConnection: dbConnection).getAll().then((accs) {
             setState(() {
               accounts = accs;
             });
@@ -58,16 +59,12 @@ class _MyHomePageState extends State<MyHomePage> {
         });
   }
 
+  void _syncItAll() {
+    SyncMotor.createAsync().then((value) => value.syncAccounts());
+  }
+
   @override
   void initState() {
-    accounts.add(Account(
-        accountId: "accountId",
-        username: "username",
-        instance: "instance",
-        lastSync: DateTime.now(),
-        profileUrl:
-            "https://user-images.githubusercontent.com/7890201/114214731-50e82780-992a-11eb-9e64-0397c2527b29.png"));
-
     refreshAccounts();
     super.initState();
   }
@@ -76,9 +73,13 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Lemmy Account Sync"),
+        title: const Text(
+          "Lemmy Account Sync",
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.green[600],
       ),
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Colors.white,
       body: Center(
           child: Padding(
         padding: const EdgeInsets.all(20),
@@ -88,13 +89,16 @@ class _MyHomePageState extends State<MyHomePage> {
                 style: Theme.of(context).textTheme.labelLarge,
               )
             : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: accounts
-                    .map((e) => AccountItem(
-                          account: e,
-                          onDelete: refreshAccounts,
-                        ))
-                    .toList(),
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  ...accounts
+                      .map((e) => AccountItem(
+                            account: e,
+                            onDelete: refreshAccounts,
+                          ))
+                      .toList(),
+                  OutlinedButton(onPressed: _syncItAll, child: Text("Sync"))
+                ],
               ),
       )),
       floatingActionButton: FloatingActionButton(

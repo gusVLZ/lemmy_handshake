@@ -13,9 +13,23 @@ class Db {
         CREATE TABLE IF NOT EXISTS accounts(
           accountId TEXT PRIMARY KEY,
           username TEXT,
+          password TEXT,
           instance TEXT,
           lastSync TEXT,
-          profileUrl TEXT
+          profileUrl TEXT,
+          nuSubscription INT,
+          nuPost INT,
+          nuComment INT
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS communities(
+          communityId TEXT PRIMARY KEY,
+          accountId TEXT,
+          community TEXT,
+          createdAt TEXT,
+          removedAt TEXT,
+          FOREIGN KEY (accountId) REFERENCES accounts(accountId)
         )
       ''');
     });
