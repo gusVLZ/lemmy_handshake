@@ -1,9 +1,10 @@
 import 'dart:core';
 
 class Account {
-  final String accountId;
+  int? id;
+  final String externalId;
   final String username;
-  final String password;
+  String? password;
   final String instance;
   final int nuSubscription;
   final int nuPost;
@@ -11,9 +12,10 @@ class Account {
   DateTime? lastSync;
   String? profileUrl;
   Account({
-    required this.accountId,
+    this.id,
+    required this.externalId,
     required this.username,
-    required this.password,
+    this.password,
     required this.instance,
     required this.nuSubscription,
     required this.nuPost,
@@ -22,11 +24,38 @@ class Account {
     this.profileUrl,
   });
 
+  factory Account.fromJson(Map<String, dynamic> json) {
+    return Account(
+      externalId: json['accountId'],
+      username: json['username'],
+      instance: json['instance'],
+      lastSync: json['lastSync'],
+      nuSubscription: json['nuSubscription'],
+      nuPost: json['nuPost'],
+      nuComment: json['nuComment'],
+      profileUrl: json['profileUrl'],
+    );
+  }
+
+  factory Account.fromDb(Map<String, dynamic> json) {
+    return Account(
+      id: json['id'],
+      externalId: json['externalId'],
+      username: json['username'],
+      instance: json['instance'],
+      lastSync: DateTime.tryParse(json['lastSync'] ?? ""),
+      nuSubscription: json['nuSubscription'],
+      nuPost: json['nuPost'],
+      nuComment: json['nuComment'],
+      profileUrl: json['profileUrl'],
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
-      'accountId': accountId,
+      'id': id,
+      'externalId': externalId,
       'username': username,
-      'password': password,
       'instance': instance,
       'nuSubscription': nuSubscription,
       'nuPost': nuPost,

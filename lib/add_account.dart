@@ -4,7 +4,8 @@ import 'package:lemmy_account_sync/model/person_view.dart';
 import 'package:lemmy_account_sync/repository/account_repo.dart';
 import 'package:lemmy_account_sync/util/db.dart';
 import 'package:lemmy_account_sync/util/lemmy.dart';
-import 'package:lemmy_account_sync/util/logger.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:lemmy_account_sync/util/sync_motor.dart';
 
 class AddAccount extends StatefulWidget {
   const AddAccount({Key? key}) : super(key: key);
@@ -17,11 +18,14 @@ enum MessageTypes { error, success, info }
 
 class AddAccountState extends State<AddAccount> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _instanceController = TextEditingController();
-  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _instanceController =
+      TextEditingController(text: "sh.itjust.works");
+  final TextEditingController _usernameController =
+      TextEditingController(text: "gusVLZ");
   final TextEditingController _passwordController = TextEditingController();
-  late ScaffoldFeatureController<SnackBar, SnackBarClosedReason>
-      _loadingController;
+
+  final storage = const FlutterSecureStorage();
+
   bool _isLoading = false;
   bool _hidePassword = true;
 
@@ -34,20 +38,35 @@ class AddAccountState extends State<AddAccount> {
   }
 
   Future<int> _saveAccount(PersonView userData) async {
-    var accountId = Db()
-        .getDatabase()
-        .then((dbConnection) => AccountRepo(dbConnection: dbConnection).insert(
-            Account(
-                accountId: userData.person.id.toString(),
-                username: userData.person.name,
-                password: _passwordController.text,
-                instance: _instanceController.text,
-                nuComment: userData.counts.commentCount,
-                nuSubscription: 0,
-                nuPost: userData.counts.postCount,
-                lastSync: null,
-                profileUrl: userData.person.avatar)))
-        .then((value) => value);
+    var account = Account(
+        externalId: userData.person.id.toString(),
+        username: userData.person.name,
+        instance: _instanceController.text,
+        nuComment: userData.counts.commentCount,
+        nuSubscription: 0,
+        nuPost: userData.counts.postCount,
+        lastSync: null,
+        profileUrl: userData.person.avatar);
+    var accountId = Db().getDatabase().then(
+          (dbConnection) =>
+              AccountRepo(dbConnection: dbConnection).insert(account).then(
+                    (insertId) => storage
+                        .write(
+                            key:
+                                '${userData.person.name}@${_instanceController.text}',
+                            value: _passwordController.text)
+                        .then(
+                      (value) async {
+                        showScaffoldMessage(
+                            'Saved, now syncing communities of this account');
+                        account.id = insertId;
+                        await SyncMotor(dbConnection)
+                            .syncSubscriptionForAccount(account);
+                        return insertId;
+                      },
+                    ),
+                  ),
+        );
 
     return accountId;
   }
@@ -61,12 +80,12 @@ class AddAccountState extends State<AddAccount> {
 
     switch (type) {
       case MessageTypes.success:
-        textColor = Colors.black;
-        backgroundColor = Colors.green[200]!;
+        textColor = Theme.of(context).colorScheme.onPrimaryContainer;
+        backgroundColor = Theme.of(context).colorScheme.primaryContainer;
         break;
       case MessageTypes.info:
-        textColor = Colors.black;
-        backgroundColor = Colors.white;
+        textColor = Theme.of(context).colorScheme.onSecondaryContainer;
+        backgroundColor = Theme.of(context).colorScheme.secondaryContainer;
         break;
       case MessageTypes.error:
         textColor = Colors.black;
@@ -93,9 +112,7 @@ class AddAccountState extends State<AddAccount> {
   void _submitForm(BuildContext context) {
     if (!_formKey.currentState!.validate()) return;
 
-    _loadingController = showScaffoldMessage(
-        'Connecting to instance and login you in',
-        duration: const Duration(seconds: 15));
+    showScaffoldMessage('Connecting to instance and login you in');
 
     setState(() {
       _isLoading = true;
@@ -110,27 +127,24 @@ class AddAccountState extends State<AddAccount> {
             type: MessageTypes.error);
         return;
       }
+      showScaffoldMessage('Logged, getting used data');
       lemmy.getUserData(_usernameController.text).then((userData) {
         if (userData == null) {
           showScaffoldMessage('Error: unable to get user data',
               type: MessageTypes.error);
           return;
         }
+        showScaffoldMessage('Got user data, saving to local storage');
         _saveAccount(userData).then((value) {
           if (value == 0) {
             showScaffoldMessage('Error: unable to save account data',
                 type: MessageTypes.error);
             return;
           }
-          try {
-            _loadingController.close();
-          } catch (e) {
-            Logger.info("Scaffold Message already closed");
-          }
           setState(() {
             _isLoading = false;
           });
-          Navigator.pushNamed(context, "home");
+          Navigator.popAndPushNamed(context, "home");
         });
       });
     });

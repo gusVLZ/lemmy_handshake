@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:lemmy_account_sync/model/account.dart';
+import 'package:lemmy_account_sync/util/logger.dart';
 import 'package:sqflite/sqflite.dart';
 
 class AccountRepo {
@@ -11,29 +14,33 @@ class AccountRepo {
 
   Future<List<Account>> getAll() async {
     final List<Map<String, dynamic>> maps =
-        await dbConnection.query('accounts');
+        //await dbConnection.query('accounts');
+        await dbConnection.rawQuery(
+            """select a.*, count(c.id) as 'nuSubscription' from accounts a 
+            left join communities c on a.id = c.accountId and c.removedAt is null
+            group by a.id, a.externalId, a.username, a.instance, a.lastSync, a.profileUrl, a.nuSubscription, a.nuPost, a.nuComment
+            """);
+    Logger.debug("database query: ${jsonEncode(maps)}");
     return List.generate(maps.length, (i) {
-      return Account(
-        accountId: maps[i]['accountId'],
-        username: maps[i]['username'],
-        password: maps[i]['password'],
-        instance: maps[i]['instance'],
-        lastSync: maps[i]['lastSync'],
-        nuSubscription: maps[i]['nuSubscription'],
-        nuPost: maps[i]['nuPost'],
-        nuComment: maps[i]['nuComment'],
-        profileUrl: maps[i]['profileUrl'],
-      );
+      return Account.fromDb(maps[i]);
     });
   }
 
   Future<int> update(Account account) async {
     return await dbConnection.update('accounts', account.toMap(),
-        where: 'accountId = ?', whereArgs: [account.accountId]);
+        where: 'externalId = ?', whereArgs: [account.externalId]);
   }
 
-  Future<int> delete(String accountId) async {
+  Future<int> updateLastSync(int id) async {
+    return await dbConnection.rawUpdate(
+        'UPDATE accounts SET lastSync = ? where id = ?',
+        [DateTime.now().toIso8601String(), id]);
+  }
+
+  Future<int> delete(int accountId) async {
+    await dbConnection
+        .delete('communities', where: 'accountId = ?', whereArgs: [accountId]);
     return await dbConnection
-        .delete('accounts', where: 'accountId = ?', whereArgs: [accountId]);
+        .delete('accounts', where: 'id = ?', whereArgs: [accountId]);
   }
 }

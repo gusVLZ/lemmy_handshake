@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get_time_ago/get_time_ago.dart';
 import 'package:lemmy_account_sync/model/account.dart';
 import 'package:lemmy_account_sync/repository/account_repo.dart';
-import 'package:lemmy_account_sync/util/date_util.dart';
 import 'package:lemmy_account_sync/util/db.dart';
 import 'package:lemmy_account_sync/widgets/confirmation.dart';
 
@@ -16,7 +16,7 @@ class AccountItem extends StatelessWidget {
     Db()
         .getDatabase()
         .then((dbConnection) =>
-            AccountRepo(dbConnection: dbConnection).delete(account.accountId))
+            AccountRepo(dbConnection: dbConnection).delete(account.id!))
         .then((deleted) => onDelete());
   }
 
@@ -25,90 +25,56 @@ class AccountItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.primaryContainer,
       borderOnForeground: true,
-      elevation: 3,
-      shadowColor: Colors.green[200],
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                account.profileUrl != null
-                    ? Image.network(
-                        account.profileUrl!,
-                        width: 42,
-                      )
-                    : const Image(
-                        image: AssetImage("assets/lemmy.png"),
-                        width: 42,
-                      ),
-                const SizedBox(width: 8),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text('${account.username}@${account.instance}',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 16)),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(
-                            "Last Sync: ${account.lastSync?.toString() ?? DateUtil(context).formatDateTimeToLocalString(DateTime.now())}"),
-                      ],
-                    )
-                  ],
-                )
-              ],
-            ),
-          ),
-          const Divider(
-            color: Colors.white,
-          ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Subscriptions: ${account.nuSubscription}",
-                        textAlign: TextAlign.left,
-                      ),
-                      Text(
-                        "Posts: ${account.nuPost}",
-                        textAlign: TextAlign.left,
-                      ),
-                      Text(
-                        "Comments: ${account.nuComment}",
-                        textAlign: TextAlign.left,
-                      )
-                    ]),
+      elevation: 0,
+      child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(children: [
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(account.username,
+                      style: Theme.of(context).primaryTextTheme.displaySmall),
+                  Text(account.instance,
+                      style: Theme.of(context).primaryTextTheme.headline6),
+                ],
               ),
-              Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                IconButton(
-                  padding: const EdgeInsets.all(16),
-                  icon: const Icon(Icons.edit),
-                  onPressed: editAccount,
-                ),
-                IconButton(
-                  padding: const EdgeInsets.all(16),
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Confirmation.showConfirmationDialog(context,
+              PopupMenuButton(itemBuilder: (context) {
+                return [
+                  const PopupMenuItem<int>(
+                    value: 0,
+                    child: Text("Edit"),
+                  ),
+                  const PopupMenuItem<int>(
+                    value: 1,
+                    child: Text("Delete"),
+                  ),
+                ];
+              }, onSelected: (value) {
+                if (value == 1) {
+                  Confirmation.showConfirmationDialog(context,
                       title: "Remove account?",
                       message: "The account won't be synced anymore",
-                      callbackOnConfirm: deleteAccount),
-                )
-              ])
-            ],
-          ),
-        ],
-      ),
+                      callbackOnConfirm: deleteAccount);
+                } else if (value == 0) {}
+              }),
+            ]),
+            const SizedBox(
+              height: 20,
+            ),
+            Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  Text("Communities: ${account.nuSubscription}"),
+                  Text("Posts: ${account.nuPost}"),
+                  Text("Comments: ${account.nuComment}"),
+                ]),
+            Text(
+                "Last sync: ${account.lastSync != null ? GetTimeAgo.parse(account.lastSync!) : "never"}")
+          ])),
     );
   }
 }

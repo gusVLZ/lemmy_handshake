@@ -11,9 +11,9 @@ class Db {
         onCreate: (Database db, int version) async {
       await db.execute('''
         CREATE TABLE IF NOT EXISTS accounts(
-          accountId TEXT PRIMARY KEY,
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          externalId TEXT UNIQUE,
           username TEXT,
-          password TEXT,
           instance TEXT,
           lastSync TEXT,
           profileUrl TEXT,
@@ -24,12 +24,13 @@ class Db {
       ''');
       await db.execute('''
         CREATE TABLE IF NOT EXISTS communities(
-          communityId TEXT PRIMARY KEY,
-          accountId TEXT,
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          externalId TEXT,
+          accountId INTEGER,
           community TEXT,
           createdAt TEXT,
           removedAt TEXT,
-          FOREIGN KEY (accountId) REFERENCES accounts(accountId)
+          FOREIGN KEY (accountId) REFERENCES accounts(id)
         )
       ''');
     });
@@ -43,5 +44,11 @@ class Db {
       path,
       version: 1, // This should be the version of the database schema
     );
+  }
+
+  Future<void> purgeDataBase() async {
+    final dbPath = await getDatabasesPath();
+    final path = join(dbPath, 'accountSync.db');
+    deleteDatabase(path);
   }
 }

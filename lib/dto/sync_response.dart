@@ -8,4 +8,13 @@ class SyncResponse {
       required this.added,
       required this.removed,
       required this.when});
+
+  Map<String, dynamic> toMap() {
+    return {
+      'accountId': accountId,
+      'added': added,
+      'removed': removed,
+      'when': when.toIso8601String(),
+    };
+  }
 }

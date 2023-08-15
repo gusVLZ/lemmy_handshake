@@ -1,13 +1,15 @@
 class Community {
-  final String communityId;
-  final String accountId;
+  int? id;
+  final String externalId;
+  int? accountId;
   final String community;
   final DateTime? createdAt;
   final DateTime? removedAt;
 
   Community({
-    required this.communityId,
-    required this.accountId,
+    this.id,
+    required this.externalId,
+    this.accountId,
     required this.community,
     this.createdAt,
     this.removedAt,
@@ -15,21 +17,33 @@ class Community {
 
   factory Community.fromJson(Map<String, dynamic> json) {
     return Community(
-      communityId: json['communityId'],
+      externalId: json['communityId'],
       accountId: json['accountId'],
       community: json['community'],
-      createdAt: DateTime.parse(json['createdAt']),
-      removedAt: json['removedAt'],
+      createdAt: DateTime.tryParse(json['createdAt'] ?? ""),
+      removedAt: DateTime.tryParse(json['removedAt'] ?? ""),
     );
   }
 
-  Map<String, dynamic> toJson() {
+  factory Community.fromDb(Map<String, dynamic> json) {
+    return Community(
+      id: json['id'],
+      externalId: json['externalId'],
+      accountId: json['accountId'],
+      community: json['community'],
+      createdAt: DateTime.tryParse(json['createdAt'] ?? ""),
+      removedAt: DateTime.tryParse(json['removedAt'] ?? ""),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
     return {
-      'communityId': communityId,
+      'id': id,
+      'externalId': externalId,
       'accountId': accountId,
       'community': community,
-      'createdAt': createdAt,
-      'removedAt': removedAt,
+      'createdAt': createdAt?.toIso8601String(),
+      'removedAt': removedAt?.toIso8601String(),
     };
   }
 }

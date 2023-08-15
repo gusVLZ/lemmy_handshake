@@ -24,7 +24,7 @@ class Confirmation {
             TextButton(
               child: const Text('Cancel'),
               onPressed: () {
-                callbackOnCancel!();
+                if (callbackOnCancel != null) callbackOnCancel();
                 Navigator.of(context).pop(); // Close the dialog
               },
             ),

@@ -1,3 +1,4 @@
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:lemmy_account_sync/add_account.dart';
 import 'package:lemmy_account_sync/model/account.dart';
@@ -14,23 +15,37 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
+  static final _defaultLightColorScheme =
+      ColorScheme.fromSwatch(primarySwatch: Colors.purple);
+
+  static final _defaultDarkColorScheme = ColorScheme.fromSwatch(
+      primarySwatch: Colors.purple, brightness: Brightness.dark);
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-        title: 'Lemmy Account Sync',
-        debugShowCheckedModeBanner: false,
-        themeMode: ThemeMode.system,
-        theme: ThemeData(
-          useMaterial3: true,
-          primarySwatch: Colors.green,
-        ),
-        home: const MyHomePage(),
-        routes: {
-          "home": (context) => const MyHomePage(),
-          "add_account": (context) => const AddAccount()
-        });
+    return DynamicColorBuilder(
+      builder: (lightColorScheme, darkColorScheme) {
+        return MaterialApp(
+          title: 'Lemmy Account Sync',
+          theme: ThemeData(
+            colorScheme: lightColorScheme ?? _defaultLightColorScheme,
+            useMaterial3: true,
+          ),
+          darkTheme: ThemeData(
+            colorScheme: darkColorScheme ?? _defaultDarkColorScheme,
+            useMaterial3: true,
+          ),
+          themeMode: ThemeMode.dark,
+          home: const MyHomePage(),
+          routes: {
+            "home": (context) => const MyHomePage(),
+            "add_account": (context) => const AddAccount()
+          },
+          debugShowCheckedModeBanner: false,
+        );
+      },
+    );
   }
 }
 
@@ -49,7 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
     Navigator.of(context).pushNamed("add_account");
   }
 
-  void refreshAccounts() {
+  Future<void> refreshAccounts() async {
     _dbHelper.startDatabase().then((dbConnection) => {
           AccountRepo(dbConnection: dbConnection).getAll().then((accs) {
             setState(() {
@@ -60,7 +75,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _syncItAll() {
-    SyncMotor.createAsync().then((value) => value.syncAccounts());
+    SyncMotor.createAsync().then((motor) =>
+        motor.syncAccounts().then((syncResult) => refreshAccounts()));
   }
 
   @override
@@ -75,32 +91,40 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: const Text(
           "Lemmy Account Sync",
-          style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: Colors.green[600],
+        backgroundColor: Theme.of(context).colorScheme.background,
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: Center(
           child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: accounts.isEmpty
-            ? Text(
-                'No accounts binded, add two at least to sync them',
-                style: Theme.of(context).textTheme.labelLarge,
-              )
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  ...accounts
-                      .map((e) => AccountItem(
-                            account: e,
-                            onDelete: refreshAccounts,
-                          ))
-                      .toList(),
-                  OutlinedButton(onPressed: _syncItAll, child: Text("Sync"))
-                ],
-              ),
-      )),
+              padding: const EdgeInsets.all(20),
+              child: RefreshIndicator(
+                onRefresh: () => refreshAccounts(),
+                child: accounts.isEmpty
+                    ? Text(
+                        'No accounts binded, add two at least to sync them',
+                        style: Theme.of(context).textTheme.labelLarge,
+                      )
+                    : ListView(
+                        children: [
+                          ...accounts
+                              .map((e) => AccountItem(
+                                    account: e,
+                                    onDelete: refreshAccounts,
+                                  ))
+                              .toList(),
+                          OutlinedButton(
+                              onPressed: _syncItAll, child: const Text("Sync")),
+                          OutlinedButton(
+                              onPressed: () {
+                                Db()
+                                    .purgeDataBase()
+                                    .then((value) => refreshAccounts());
+                              },
+                              child: const Text("DELETE DB"))
+                        ],
+                      ),
+              ))),
       floatingActionButton: FloatingActionButton(
         onPressed: _addAccount,
         tooltip: 'Add account',
