@@ -1,6 +1,6 @@
 {
-    "name": "lemmy_account_sync",
-    "short_name": "lemmy_account_sync",
+    "name": "Lemmy Account Sync",
+    "short_name": "Lemmy Account Sync",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

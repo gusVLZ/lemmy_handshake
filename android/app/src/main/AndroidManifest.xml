@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="dev.gusvlz.lemmy_account_sync">
    <application
-        android:label="lemmy_account_sync"
+        android:label="Lemmy Account Sync"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

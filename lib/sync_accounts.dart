@@ -10,8 +10,6 @@ class SyncAccounts extends StatefulWidget {
 }
 
 class SyncAccountsState extends State<SyncAccounts> {
-  final _formKey = GlobalKey<FormState>();
-
   final storage = const FlutterSecureStorage();
 
   final List<String> _messages = [];
