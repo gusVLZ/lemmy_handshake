@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.lemmy_account_sync">
+    package="dev.gusvlz.lemmy_account_sync">
    <application
         android:label="lemmy_account_sync"
         android:name="${applicationName}"

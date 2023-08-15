@@ -29,52 +29,63 @@ class AccountItem extends StatelessWidget {
       borderOnForeground: true,
       elevation: 0,
       child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(children: [
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(account.username,
-                      style: Theme.of(context).primaryTextTheme.displaySmall),
-                  Text(account.instance,
-                      style: Theme.of(context).primaryTextTheme.headline6),
-                ],
-              ),
-              PopupMenuButton(itemBuilder: (context) {
-                return [
-                  const PopupMenuItem<int>(
-                    value: 0,
-                    child: Text("Edit"),
-                  ),
-                  const PopupMenuItem<int>(
-                    value: 1,
-                    child: Text("Delete"),
-                  ),
-                ];
-              }, onSelected: (value) {
-                if (value == 1) {
-                  Confirmation.showConfirmationDialog(context,
-                      title: "Remove account?",
-                      message: "The account won't be synced anymore",
-                      callbackOnConfirm: deleteAccount);
-                } else if (value == 0) {}
-              }),
-            ]),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(account.username,
+                        style: Theme.of(context).primaryTextTheme.displaySmall),
+                    Text(account.instance,
+                        style: Theme.of(context).primaryTextTheme.headline6),
+                  ],
+                ),
+                PopupMenuButton(
+                  itemBuilder: (context) {
+                    return [
+                      const PopupMenuItem<int>(
+                        value: 0,
+                        child: Text("Edit"),
+                      ),
+                      const PopupMenuItem<int>(
+                        value: 1,
+                        child: Text("Delete"),
+                      ),
+                    ];
+                  },
+                  onSelected: (value) {
+                    if (value == 1) {
+                      Confirmation.showConfirmationDialog(context,
+                          title: "Remove account?",
+                          message: "The account won't be synced anymore",
+                          callbackOnConfirm: deleteAccount);
+                    } else if (value == 0) {}
+                  },
+                ),
+              ],
+            ),
             const SizedBox(
               height: 20,
             ),
             Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Text("Communities: ${account.nuSubscription}"),
-                  Text("Posts: ${account.nuPost}"),
-                  Text("Comments: ${account.nuComment}"),
-                ]),
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                Text("Communities: ${account.nuSubscription}"),
+                Text("Posts: ${account.nuPost}"),
+                Text("Comments: ${account.nuComment}"),
+              ],
+            ),
             Text(
                 "Last sync: ${account.lastSync != null ? GetTimeAgo.parse(account.lastSync!) : "never"}")
-          ])),
+          ],
+        ),
+      ),
     );
   }
 }

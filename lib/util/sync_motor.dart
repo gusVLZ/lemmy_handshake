@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:lemmy_account_sync/dto/sync_account.dart';
 import 'package:lemmy_account_sync/dto/sync_response.dart';
 import 'package:lemmy_account_sync/model/account.dart';
 import 'package:lemmy_account_sync/model/community.dart';
@@ -14,6 +15,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class SyncMotor {
   late Database _dbConnection;
   final storage = const FlutterSecureStorage();
+  final List<SyncAccount> _syncAccountDTO = [];
 
   SyncMotor(Database db) {
     _dbConnection = db;
@@ -30,11 +32,37 @@ class SyncMotor {
         await AccountRepo(dbConnection: _dbConnection).getAll();
 
     for (var acc in accounts) {
-      await syncSubscriptionForAccount(acc);
+      await syncOnlineToLocal(acc);
+    }
+
+    for (var acc in accounts) {
+      var lemmy = Lemmy(acc.instance);
+      await lemmy.login(acc.username, acc.password!);
+
+      var localUpdates = await CommunityRepo(dbConnection: _dbConnection)
+          .getLastState30Days(acc.lastSync ?? DateTime(2020));
+
+      var toAdd = localUpdates
+          .where((element) => element['state'] == 'subscribed')
+          .map((e) => e['community'].toString())
+          .toList();
+      var toRemove = localUpdates
+          .where((element) => element['state'] == 'unsubscribed')
+          .map((e) => e['community'].toString())
+          .toList();
+
+      await lemmy.subscribe(toAdd);
+      await lemmy.subscribe(toRemove, follow: false);
+
+      AccountRepo(dbConnection: _dbConnection).updateLastSync(acc.id!);
+    }
+
+    for (var acc in accounts) {
+      await syncOnlineToLocal(acc);
     }
   }
 
-  Future<SyncResponse> syncSubscriptionForAccount(Account acc) async {
+  Future<SyncResponse> syncOnlineToLocal(Account acc) async {
     Lemmy lemmyClient = Lemmy(acc.instance);
 
     String? password =
@@ -46,13 +74,15 @@ class SyncMotor {
           "Unable to retrieve password for account ${acc.username}@${acc.instance}");
     }
 
-    await lemmyClient.login(acc.username, password);
+    acc.password = password;
+
+    await lemmyClient.login(acc.username, acc.password!);
     CommunityRepo communityRepo = CommunityRepo(dbConnection: _dbConnection);
 
     var onlineCommunities = await lemmyClient.getCommunities();
 
     var localCommunities = await communityRepo
-        .getAll()
+        .getAllFromAccount(acc.id!)
         .then((value) => value.map((e) => e.externalId));
 
     var toAdd = onlineCommunities
@@ -60,31 +90,44 @@ class SyncMotor {
     var toDelete = localCommunities
         .where((c) => !onlineCommunities.contains(c.split("@")[0]));
 
-    for (var community in toAdd) {
-      await communityRepo.insert(
-        Community(
-            externalId: "$community@${acc.instance}",
-            accountId: acc.id,
-            community: community,
-            createdAt: DateTime.now(),
-            removedAt: null),
-      );
-    }
-
-    for (var community in toDelete) {
-      await communityRepo.softDelete(community);
-    }
-
-    AccountRepo(dbConnection: _dbConnection).updateLastSync(acc.id!);
-
     var response = SyncResponse(
       accountId: acc.instance,
-      added: toAdd.toList(),
-      removed: toDelete.toList(),
+      added: [],
+      removed: [],
+      failedToAdd: [],
+      failedToRemove: [],
       when: DateTime.now(),
     );
 
-    Logger.info("SYNC RESULT: ${jsonEncode(response.toMap())}");
+    for (var community in toAdd) {
+      try {
+        await communityRepo.insert(
+          Community(
+              externalId: "$community@${acc.instance}",
+              accountId: acc.id,
+              community: community,
+              createdAt: DateTime.now(),
+              removedAt: null),
+        );
+        response.added.add(community);
+      } catch (e) {
+        response.failedToAdd.add(community);
+      }
+    }
+
+    for (var community in toDelete) {
+      try {
+        await communityRepo.softDelete(community);
+        response.removed.add(community);
+      } catch (e) {
+        response.failedToRemove.add(community);
+      }
+    }
+
+    Logger.info("SYNC TO LOCAL: ${jsonEncode(response.toMap())}");
+
+    _syncAccountDTO.add(SyncAccount(
+        account: acc, toAdd: toAdd.toSet(), toDelete: toAdd.toSet()));
 
     return response;
   }

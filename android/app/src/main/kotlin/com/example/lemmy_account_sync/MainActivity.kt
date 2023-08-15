@@ -1,4 +1,4 @@
-package com.example.lemmy_account_sync
+package dev.gusvlz.lemmy_account_sync
 
 import io.flutter.embedding.android.FlutterActivity
 

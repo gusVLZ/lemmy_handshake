@@ -48,24 +48,24 @@ class AddAccountState extends State<AddAccount> {
         lastSync: null,
         profileUrl: userData.person.avatar);
     var accountId = Db().getDatabase().then(
-          (dbConnection) =>
-              AccountRepo(dbConnection: dbConnection).insert(account).then(
-                    (insertId) => storage
-                        .write(
-                            key:
-                                '${userData.person.name}@${_instanceController.text}',
-                            value: _passwordController.text)
-                        .then(
-                      (value) async {
-                        showScaffoldMessage(
-                            'Saved, now syncing communities of this account');
-                        account.id = insertId;
-                        await SyncMotor(dbConnection)
-                            .syncSubscriptionForAccount(account);
-                        return insertId;
-                      },
-                    ),
-                  ),
+          (dbConnection) => AccountRepo(dbConnection: dbConnection)
+              .insert(account)
+              .then(
+                (insertId) => storage
+                    .write(
+                        key:
+                            '${userData.person.name}@${_instanceController.text}',
+                        value: _passwordController.text)
+                    .then(
+                  (value) async {
+                    showScaffoldMessage(
+                        'Saved, now syncing communities of this account');
+                    account.id = insertId;
+                    await SyncMotor(dbConnection).syncOnlineToLocal(account);
+                    return insertId;
+                  },
+                ),
+              ),
         );
 
     return accountId;
@@ -125,6 +125,9 @@ class AddAccountState extends State<AddAccount> {
       if (!loginResponse) {
         showScaffoldMessage('Error: check your credentials and instance url',
             type: MessageTypes.error);
+        setState(() {
+          _isLoading = false;
+        });
         return;
       }
       showScaffoldMessage('Logged, getting used data');
@@ -218,7 +221,12 @@ class AddAccountState extends State<AddAccount> {
                 const SizedBox(height: 32),
                 OutlinedButton(
                   onPressed: () => !_isLoading ? _submitForm(context) : () {},
-                  child: const Text('Add account'),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator.adaptive())
+                      : const Text('Add account'),
                 ),
               ],
             ),

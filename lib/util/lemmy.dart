@@ -1,4 +1,5 @@
 import 'package:http/http.dart';
+import 'package:lemmy_account_sync/dto/sync_response.dart';
 import 'package:lemmy_account_sync/model/person_view.dart';
 import 'dart:convert';
 
@@ -68,7 +69,6 @@ class Lemmy {
         jsonData["communities"].forEach((comm) {
           String url = comm["community"]["actor_id"];
           userCommunities.add(url);
-          Logger.info(url);
         });
       } catch (err) {
         Logger.error("error: $err");
@@ -80,7 +80,7 @@ class Lemmy {
   }
 
   Future<void> _rateLimit() async {
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 200));
   }
 
   Future<Response> _requestIt(
@@ -111,12 +111,22 @@ class Lemmy {
     }
   }
 
-  Future<void> subscribe(List<String> communities) async {
-    Map<String, String> payload = {
-      "community_id": "",
-      "follow": "true",
+  Future<SyncResponse> subscribe(List<String> communities,
+      {bool follow = true}) async {
+    Map<String, dynamic> payload = {
+      "community_id": 0,
+      "follow": follow,
       "auth": _authToken,
     };
+
+    var syncResponse = SyncResponse(
+      accountId: _siteUrl,
+      added: [],
+      removed: [],
+      failedToAdd: [],
+      failedToRemove: [],
+      when: DateTime.now(),
+    );
 
     for (String url in communities) {
       try {
@@ -124,7 +134,7 @@ class Lemmy {
         int? commId = await resolveCommunity(url);
 
         if (commId != null) {
-          payload["community_id"] = commId.toString();
+          payload["community_id"] = commId;
           Logger.info("> Subscribing to $url ($commId)");
           final response = await _requestIt(
             Uri.parse('$_siteUrl/$_apiBaseUrl/community/follow'),
@@ -133,14 +143,28 @@ class Lemmy {
           );
 
           if (response.statusCode == 200) {
-            _userCommunities.add(commId.toString());
-            Logger.info("> Successfully subscribed to $url ($commId)");
+            if (follow) {
+              _userCommunities.add(commId.toString());
+              Logger.info("> Successfully subscribed to $url ($commId)");
+              syncResponse.added.add(url);
+            } else {
+              _userCommunities.remove(commId.toString());
+              Logger.info("> Successfully unsubscribed to $url ($commId)");
+              syncResponse.removed.add(url);
+            }
           }
         }
       } catch (e) {
         Logger.error("API error: $e");
+        if (follow) {
+          syncResponse.failedToAdd.add(url);
+        } else {
+          syncResponse.failedToRemove.add(url);
+        }
       }
     }
+
+    return syncResponse;
   }
 
   Future<int?> resolveCommunity(String community) async {

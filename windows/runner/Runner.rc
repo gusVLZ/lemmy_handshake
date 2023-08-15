@@ -93,7 +93,7 @@ BEGIN
             VALUE "FileDescription", "lemmy_account_sync" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "lemmy_account_sync" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2023 com.example. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2023 dev.gusvlz. All rights reserved." "\0"
             VALUE "OriginalFilename", "lemmy_account_sync.exe" "\0"
             VALUE "ProductName", "lemmy_account_sync" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
