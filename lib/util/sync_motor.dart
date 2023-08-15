@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:lemmy_account_sync/dto/sync_account.dart';
 import 'package:lemmy_account_sync/dto/sync_response.dart';
@@ -77,7 +76,7 @@ class SyncMotor {
           .toList();
 
       callLogHandler(
-          "Sync will subscribe to ${toAdd.length} communities, and unsubscribe from ${toRemove.length} communities");
+          "${acc.username}@${acc.instance} - Sync will subscribe to ${toAdd.length} communities, and unsubscribe from ${toRemove.length} communities");
 
       var progress = 0;
       for (var url in toAdd) {

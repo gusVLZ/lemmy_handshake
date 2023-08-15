@@ -113,7 +113,7 @@ class AddAccountState extends State<AddAccount> {
           setState(() {
             _isLoading = false;
           });
-          Navigator.popAndPushNamed(context, "home");
+          Navigator.of(context).pop();
         });
       });
     });

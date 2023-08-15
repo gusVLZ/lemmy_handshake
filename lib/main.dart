@@ -63,7 +63,9 @@ class _MyHomePageState extends State<MyHomePage> {
   List<Account> accounts = [];
 
   void _addAccount() {
-    Navigator.of(context).pushNamed("add_account");
+    Navigator.of(context)
+        .pushNamed("add_account")
+        .then((value) => refreshAccounts());
   }
 
   Future<void> refreshAccounts() async {
@@ -116,7 +118,8 @@ class _MyHomePageState extends State<MyHomePage> {
                               .toList(),
                           OutlinedButton(
                               onPressed: (() => Navigator.of(context)
-                                  .pushNamed("sync_accounts")),
+                                  .pushNamed("sync_accounts")
+                                  .then((value) => refreshAccounts())),
                               child: const Text("Sync")),
                           OutlinedButton(
                               onPressed: () {

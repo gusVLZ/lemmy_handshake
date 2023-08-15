@@ -41,26 +41,21 @@ class SyncAccountsState extends State<SyncAccounts> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Text('Synchronizing accounts'),
-              CircularProgressIndicator()
-            ]),
-      ),
-      body: Align(
-        alignment: Alignment.center,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _formKey,
-            child: ListView(
-              children: _messages.map((e) => Text(e)).toList(),
-            ),
-          ),
+        appBar: AppBar(
+          title: const Text('Synchronizing accounts'),
         ),
-      ),
+        body: ListView(
+          children: [
+            const LinearProgressIndicator(),
+            ..._messages.map((e) => MessageWrapper(e)).toList()
+          ],
+        ));
+  }
+
+  Widget MessageWrapper(String message) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Text(message),
     );
   }
 }
