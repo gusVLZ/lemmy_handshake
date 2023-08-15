@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:lemmy_account_sync/add_account.dart';
 import 'package:lemmy_account_sync/model/account.dart';
 import 'package:lemmy_account_sync/repository/account_repo.dart';
+import 'package:lemmy_account_sync/sync_accounts.dart';
 import 'package:lemmy_account_sync/util/db.dart';
-import 'package:lemmy_account_sync/util/sync_motor.dart';
+import 'package:lemmy_account_sync/util/scaffold_message.dart';
 import 'package:lemmy_account_sync/widgets/account_item.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -40,7 +41,8 @@ class MyApp extends StatelessWidget {
           home: const MyHomePage(),
           routes: {
             "home": (context) => const MyHomePage(),
-            "add_account": (context) => const AddAccount()
+            "add_account": (context) => const AddAccount(),
+            "sync_accounts": (context) => const SyncAccounts()
           },
           debugShowCheckedModeBanner: false,
         );
@@ -74,9 +76,8 @@ class _MyHomePageState extends State<MyHomePage> {
         });
   }
 
-  void _syncItAll() {
-    SyncMotor.createAsync().then((motor) =>
-        motor.syncAccounts().then((syncResult) => refreshAccounts()));
+  void showMessage(String message) {
+    ScaffoldMessage(context).showScaffoldMessage(message);
   }
 
   @override
@@ -114,7 +115,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                   ))
                               .toList(),
                           OutlinedButton(
-                              onPressed: _syncItAll, child: const Text("Sync")),
+                              onPressed: (() => Navigator.of(context)
+                                  .pushNamed("sync_accounts")),
+                              child: const Text("Sync")),
                           OutlinedButton(
                               onPressed: () {
                                 Db()

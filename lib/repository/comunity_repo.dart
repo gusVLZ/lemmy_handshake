@@ -17,23 +17,27 @@ class CommunityRepo {
     });
   }
 
-  Future<List<Map<String, dynamic>>> getLastState30Days(DateTime after) async {
+  Future<List<Map<String, dynamic>>> getLastState30Days(
+      DateTime after, int accountId) async {
     final List<Map<String, dynamic>> maps = await dbConnection.rawQuery("""
       select 
-        community, 
-        max(ifnull(removedAt, createdAt)) as 'lastUpdate', 
-        case when max(removedAt)>max(createdAt) then 'unsubscribed' else 'subscribed' end as 'state'
-      from communities
-      where ifnull(removedAt, createdAt) > '$after'
-      group by community
+        a.community, 
+        max(ifnull(a.removedAt, a.createdAt)) as 'lastUpdate', 
+        case when max(a.removedAt)>max(a.createdAt) then 'unsubscribed' else 'subscribed' end as 'state'
+      from communities a
+      group by a.community
+      having max(case when a.removedAt > a.createdAt then a.removedAt else a.createdAt end) > '${after.toIso8601String()}'
     """);
 
     return maps;
   }
 
-  Future<List<Community>> getAllFromAccount(int accountId) async {
-    final List<Map<String, dynamic>> maps = await dbConnection
-        .query('communities', where: "accountId = ?", whereArgs: [accountId]);
+  Future<List<Community>> getAllFromAccount(
+      int accountId, DateTime lastSync) async {
+    final List<Map<String, dynamic>> maps = await dbConnection.query(
+        'communities',
+        where: "accountId = ? and (removedAt is null or removedAt > ?)",
+        whereArgs: [accountId, lastSync.toIso8601String()]);
     return List.generate(maps.length, (i) {
       return Community.fromDb(maps[i]);
     });

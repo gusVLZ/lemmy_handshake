@@ -5,6 +5,7 @@ import 'package:lemmy_account_sync/repository/account_repo.dart';
 import 'package:lemmy_account_sync/util/db.dart';
 import 'package:lemmy_account_sync/util/lemmy.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:lemmy_account_sync/util/scaffold_message.dart';
 import 'package:lemmy_account_sync/util/sync_motor.dart';
 
 class AddAccount extends StatefulWidget {
@@ -13,8 +14,6 @@ class AddAccount extends StatefulWidget {
   @override
   AddAccountState createState() => AddAccountState();
 }
-
-enum MessageTypes { error, success, info }
 
 class AddAccountState extends State<AddAccount> {
   final _formKey = GlobalKey<FormState>();
@@ -48,71 +47,34 @@ class AddAccountState extends State<AddAccount> {
         lastSync: null,
         profileUrl: userData.person.avatar);
     var accountId = Db().getDatabase().then(
-          (dbConnection) => AccountRepo(dbConnection: dbConnection)
-              .insert(account)
-              .then(
-                (insertId) => storage
-                    .write(
-                        key:
-                            '${userData.person.name}@${_instanceController.text}',
-                        value: _passwordController.text)
-                    .then(
-                  (value) async {
-                    showScaffoldMessage(
-                        'Saved, now syncing communities of this account');
-                    account.id = insertId;
-                    await SyncMotor(dbConnection).syncOnlineToLocal(account);
-                    return insertId;
-                  },
-                ),
-              ),
+          (dbConnection) =>
+              AccountRepo(dbConnection: dbConnection).insert(account).then(
+                    (insertId) => storage
+                        .write(
+                            key:
+                                '${userData.person.name}@${_instanceController.text}',
+                            value: _passwordController.text)
+                        .then(
+                      (value) async {
+                        ScaffoldMessage(context).showScaffoldMessage(
+                            'Saved, now syncing communities of this account');
+                        account.id = insertId;
+                        await SyncMotor(dbConnection)
+                            .syncOnlineToLocal(account, firstTime: true);
+                        return insertId;
+                      },
+                    ),
+                  ),
         );
 
     return accountId;
   }
 
-  ScaffoldFeatureController<SnackBar, SnackBarClosedReason> showScaffoldMessage(
-      String message,
-      {MessageTypes type = MessageTypes.info,
-      Duration duration = const Duration(seconds: 3)}) {
-    Color textColor;
-    Color backgroundColor;
-
-    switch (type) {
-      case MessageTypes.success:
-        textColor = Theme.of(context).colorScheme.onPrimaryContainer;
-        backgroundColor = Theme.of(context).colorScheme.primaryContainer;
-        break;
-      case MessageTypes.info:
-        textColor = Theme.of(context).colorScheme.onSecondaryContainer;
-        backgroundColor = Theme.of(context).colorScheme.secondaryContainer;
-        break;
-      case MessageTypes.error:
-        textColor = Colors.black;
-        backgroundColor = Colors.red[200]!;
-        break;
-      default:
-        textColor = Colors.black;
-        backgroundColor = Colors.white;
-    }
-
-    var loadingController = ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(message, style: TextStyle(color: textColor))),
-        backgroundColor: backgroundColor,
-        duration: duration,
-      ),
-    );
-
-    return loadingController;
-  }
-
   void _submitForm(BuildContext context) {
     if (!_formKey.currentState!.validate()) return;
 
-    showScaffoldMessage('Connecting to instance and login you in');
+    ScaffoldMessage(context)
+        .showScaffoldMessage('Connecting to instance and login you in');
 
     setState(() {
       _isLoading = true;
@@ -123,24 +85,28 @@ class AddAccountState extends State<AddAccount> {
         .login(_usernameController.text, _passwordController.text)
         .then((loginResponse) {
       if (!loginResponse) {
-        showScaffoldMessage('Error: check your credentials and instance url',
+        ScaffoldMessage(context).showScaffoldMessage(
+            'Error: check your credentials and instance url',
             type: MessageTypes.error);
         setState(() {
           _isLoading = false;
         });
         return;
       }
-      showScaffoldMessage('Logged, getting used data');
+      ScaffoldMessage(context).showScaffoldMessage('Logged, getting used data');
       lemmy.getUserData(_usernameController.text).then((userData) {
         if (userData == null) {
-          showScaffoldMessage('Error: unable to get user data',
+          ScaffoldMessage(context).showScaffoldMessage(
+              'Error: unable to get user data',
               type: MessageTypes.error);
           return;
         }
-        showScaffoldMessage('Got user data, saving to local storage');
+        ScaffoldMessage(context)
+            .showScaffoldMessage('Got user data, saving to local storage');
         _saveAccount(userData).then((value) {
           if (value == 0) {
-            showScaffoldMessage('Error: unable to save account data',
+            ScaffoldMessage(context).showScaffoldMessage(
+                'Error: unable to save account data',
                 type: MessageTypes.error);
             return;
           }

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:lemmy_account_sync/dto/sync_account.dart';
 import 'package:lemmy_account_sync/dto/sync_response.dart';
@@ -16,15 +17,24 @@ class SyncMotor {
   late Database _dbConnection;
   final storage = const FlutterSecureStorage();
   final List<SyncAccount> _syncAccountDTO = [];
+  Function(String)? statusUpdateHandler;
 
-  SyncMotor(Database db) {
+  SyncMotor(Database db, {this.statusUpdateHandler}) {
     _dbConnection = db;
   }
 
-  static Future<SyncMotor> createAsync() async {
-    final data =
-        await Db().getDatabase(); // Assuming fetchData is an async method
-    return SyncMotor(data);
+  static Future<SyncMotor> createAsync(
+      {Function(String)? statusUpdateHandler}) async {
+    final data = await Db().getDatabase();
+    return SyncMotor(data, statusUpdateHandler: statusUpdateHandler);
+  }
+
+  void callLogHandler(String message) {
+    if (statusUpdateHandler != null) {
+      statusUpdateHandler!(message);
+    } else {
+      Logger.info(message);
+    }
   }
 
   Future<void> syncAccounts() async {
@@ -37,10 +47,25 @@ class SyncMotor {
 
     for (var acc in accounts) {
       var lemmy = Lemmy(acc.instance);
-      await lemmy.login(acc.username, acc.password!);
+      var loginResult = await lemmy.login(acc.username, acc.password!);
+      if (!loginResult) {
+        callLogHandler(
+            "Login failed for account ${acc.username}@${acc.instance}");
+      }
 
       var localUpdates = await CommunityRepo(dbConnection: _dbConnection)
-          .getLastState30Days(acc.lastSync ?? DateTime(2020));
+          .getLastState30Days(acc.lastSync ?? DateTime(2020), acc.id!);
+
+      var accountLocalState = await CommunityRepo(dbConnection: _dbConnection)
+          .getAllFromAccount(acc.id!, acc.lastSync ?? DateTime.now());
+
+      localUpdates = localUpdates
+          .where((c) => !accountLocalState
+              .map((e) =>
+                  e.community +
+                  (e.removedAt == null ? "subscribed" : "unsubscribed"))
+              .contains(c['community'] + c['state']))
+          .toList();
 
       var toAdd = localUpdates
           .where((element) => element['state'] == 'subscribed')
@@ -51,18 +76,32 @@ class SyncMotor {
           .map((e) => e['community'].toString())
           .toList();
 
-      await lemmy.subscribe(toAdd);
-      await lemmy.subscribe(toRemove, follow: false);
+      callLogHandler(
+          "Sync will subscribe to ${toAdd.length} communities, and unsubscribe from ${toRemove.length} communities");
 
-      AccountRepo(dbConnection: _dbConnection).updateLastSync(acc.id!);
+      var progress = 0;
+      for (var url in toAdd) {
+        progress++;
+        callLogHandler("Following $url - ($progress/${toAdd.length})");
+        await lemmy.subscribe(url);
+      }
+      progress = 0;
+      for (var url in toRemove) {
+        progress++;
+        callLogHandler("Unfollowing $url - ($progress/${toRemove.length})");
+        await lemmy.subscribe(url, follow: false);
+      }
     }
 
     for (var acc in accounts) {
+      callLogHandler("Saving sync changes");
       await syncOnlineToLocal(acc);
+      await AccountRepo(dbConnection: _dbConnection).updateLastSync(acc.id!);
     }
   }
 
-  Future<SyncResponse> syncOnlineToLocal(Account acc) async {
+  Future<SyncResponse> syncOnlineToLocal(Account acc,
+      {bool firstTime = false}) async {
     Lemmy lemmyClient = Lemmy(acc.instance);
 
     String? password =
@@ -70,19 +109,28 @@ class SyncMotor {
     if (password == null || password.isEmpty) {
       Logger.error(
           "Unable to retrieve password for account ${acc.username}@${acc.instance}");
+      callLogHandler(
+          "Unable to retrieve password for account ${acc.username}@${acc.instance}");
       throw Exception(
           "Unable to retrieve password for account ${acc.username}@${acc.instance}");
     }
 
     acc.password = password;
 
-    await lemmyClient.login(acc.username, acc.password!);
+    //callLogHandler("Authenticating to ${acc.username}@${acc.instance}");
+    var loginResult = await lemmyClient.login(acc.username, acc.password!);
+    if (!loginResult) {
+      callLogHandler(
+          "Login failed for account ${acc.username}@${acc.instance}");
+    }
     CommunityRepo communityRepo = CommunityRepo(dbConnection: _dbConnection);
 
+    callLogHandler(
+        "Fetching remote communities from ${acc.username}@${acc.instance}");
     var onlineCommunities = await lemmyClient.getCommunities();
 
     var localCommunities = await communityRepo
-        .getAllFromAccount(acc.id!)
+        .getAllFromAccount(acc.id!, acc.lastSync ?? DateTime.now())
         .then((value) => value.map((e) => e.externalId));
 
     var toAdd = onlineCommunities
@@ -101,6 +149,7 @@ class SyncMotor {
 
     for (var community in toAdd) {
       try {
+        callLogHandler("Saving remote updates");
         await communityRepo.insert(
           Community(
               externalId: "$community@${acc.instance}",
@@ -111,6 +160,7 @@ class SyncMotor {
         );
         response.added.add(community);
       } catch (e) {
+        callLogHandler("Failed to save updates");
         response.failedToAdd.add(community);
       }
     }

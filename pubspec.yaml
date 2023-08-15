@@ -42,6 +42,9 @@ dependencies:
   sqflite_common_ffi: ^2.2.5
   http: ^0.13.5
   logger: ^1.0.0 
+  flutter_secure_storage: ^4.2.1
+  get_time_ago: ^1.1.8
+  dynamic_color: ^1.5.4
 
 dev_dependencies:
   flutter_test:

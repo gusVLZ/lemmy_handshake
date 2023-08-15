@@ -10,7 +10,6 @@ class Lemmy {
   final String _apiBaseUrl = "api/$_apiVersion";
   late String _siteUrl;
   late String _authToken;
-  Set<String> _userCommunities = {};
 
   Lemmy(String url) {
     Uri parsedUrl = Uri.parse(url);
@@ -75,7 +74,6 @@ class Lemmy {
       }
     }
 
-    _userCommunities = userCommunities.toSet();
     return userCommunities;
   }
 
@@ -111,14 +109,8 @@ class Lemmy {
     }
   }
 
-  Future<SyncResponse> subscribe(List<String> communities,
+  Future<SyncResponse> subscribeToList(List<String> communities,
       {bool follow = true}) async {
-    Map<String, dynamic> payload = {
-      "community_id": 0,
-      "follow": follow,
-      "auth": _authToken,
-    };
-
     var syncResponse = SyncResponse(
       accountId: _siteUrl,
       added: [],
@@ -129,33 +121,16 @@ class Lemmy {
     );
 
     for (String url in communities) {
-      try {
-        // Resolve community first
-        int? commId = await resolveCommunity(url);
-
-        if (commId != null) {
-          payload["community_id"] = commId;
-          Logger.info("> Subscribing to $url ($commId)");
-          final response = await _requestIt(
-            Uri.parse('$_siteUrl/$_apiBaseUrl/community/follow'),
-            method: 'POST',
-            body: payload,
-          );
-
-          if (response.statusCode == 200) {
-            if (follow) {
-              _userCommunities.add(commId.toString());
-              Logger.info("> Successfully subscribed to $url ($commId)");
-              syncResponse.added.add(url);
-            } else {
-              _userCommunities.remove(commId.toString());
-              Logger.info("> Successfully unsubscribed to $url ($commId)");
-              syncResponse.removed.add(url);
-            }
-          }
+      var result = await subscribe(url, follow: follow);
+      if (result) {
+        if (follow) {
+          Logger.info("> Successfully subscribed to $url");
+          syncResponse.added.add(url);
+        } else {
+          Logger.info("> Successfully unsubscribed to $url");
+          syncResponse.removed.add(url);
         }
-      } catch (e) {
-        Logger.error("API error: $e");
+      } else {
         if (follow) {
           syncResponse.failedToAdd.add(url);
         } else {
@@ -165,6 +140,39 @@ class Lemmy {
     }
 
     return syncResponse;
+  }
+
+  Future<bool> subscribe(String community, {bool follow = true}) async {
+    Map<String, dynamic> payload = {
+      "community_id": 0,
+      "follow": follow,
+      "auth": _authToken,
+    };
+
+    try {
+      // Resolve community first
+      int? commId = await resolveCommunity(community);
+
+      if (commId != null) {
+        payload["community_id"] = commId;
+        Logger.info("> Subscribing to $community ($commId)");
+        final response = await _requestIt(
+          Uri.parse('$_siteUrl/$_apiBaseUrl/community/follow'),
+          method: 'POST',
+          body: payload,
+        );
+
+        if (response.statusCode == 200) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+    } catch (e) {
+      Logger.error("API error: $e");
+      return false;
+    }
+    return false;
   }
 
   Future<int?> resolveCommunity(String community) async {
