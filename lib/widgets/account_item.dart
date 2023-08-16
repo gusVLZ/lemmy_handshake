@@ -42,7 +42,7 @@ class AccountItem extends StatelessWidget {
                     Text(account.username,
                         style: Theme.of(context).primaryTextTheme.displaySmall),
                     Text(account.instance,
-                        style: Theme.of(context).primaryTextTheme.headline6),
+                        style: Theme.of(context).primaryTextTheme.titleMedium),
                   ],
                 ),
                 PopupMenuButton(

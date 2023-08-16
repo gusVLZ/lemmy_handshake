@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_windows_vault/flutter_windows_vault.dart';
-import 'package:lemmy_account_sync/util/logger.dart';
 
 class CredentialUtils {
   static Future<bool> save(String key, String password) async {
@@ -12,10 +11,7 @@ class CredentialUtils {
     } else {
       return const FlutterSecureStorage()
           .write(key: key, value: password)
-          .then((value) => true)
-          .catchError((err) {
-        Logger.error('Error: $err'); // Prints 401.
-      });
+          .then((value) => true);
     }
   }
 
@@ -24,9 +20,7 @@ class CredentialUtils {
       return FlutterWindowsVault.get(key: key, encrypted: true)
           .then((value) => value?.value);
     } else {
-      return const FlutterSecureStorage().read(key: key).catchError((err) {
-        Logger.error('Error: $err'); // Prints 401.
-      });
+      return const FlutterSecureStorage().read(key: key);
     }
   }
 }
