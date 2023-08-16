@@ -45,12 +45,18 @@ class SyncAccountsState extends State<SyncAccounts> {
         body: ListView(
           children: [
             const LinearProgressIndicator(),
-            ..._messages.map((e) => MessageWrapper(e)).toList()
+            ..._messages.map((e) => MessageWrapper(message: e)).toList()
           ],
         ));
   }
+}
 
-  Widget MessageWrapper(String message) {
+class MessageWrapper extends StatelessWidget {
+  final String message;
+  const MessageWrapper({super.key, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Text(message),

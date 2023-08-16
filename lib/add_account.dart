@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lemmy_account_sync/model/account.dart';
 import 'package:lemmy_account_sync/model/person_view.dart';
 import 'package:lemmy_account_sync/repository/account_repo.dart';
+import 'package:lemmy_account_sync/util/credential_utils.dart';
 import 'package:lemmy_account_sync/util/db.dart';
 import 'package:lemmy_account_sync/util/lemmy.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -49,11 +50,9 @@ class AddAccountState extends State<AddAccount> {
     var accountId = Db().getDatabase().then(
           (dbConnection) =>
               AccountRepo(dbConnection: dbConnection).insert(account).then(
-                    (insertId) => storage
-                        .write(
-                            key:
-                                '${userData.person.name}@${_instanceController.text}',
-                            value: _passwordController.text)
+                    (insertId) => CredentialUtils.save(
+                            "${userData.person.name}@${_instanceController.text}",
+                            _passwordController.text)
                         .then(
                       (value) async {
                         ScaffoldMessage(context).showScaffoldMessage(
@@ -168,6 +167,7 @@ class AddAccountState extends State<AddAccount> {
                   enabled: !_isLoading,
                   controller: _passwordController,
                   autocorrect: false,
+                  onFieldSubmitted: (value) => _submitForm(context),
                   keyboardType: TextInputType.text,
                   decoration: InputDecoration(
                       suffixIcon: TextButton(

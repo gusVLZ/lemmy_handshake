@@ -6,6 +6,7 @@ import 'package:lemmy_account_sync/model/account.dart';
 import 'package:lemmy_account_sync/model/community.dart';
 import 'package:lemmy_account_sync/repository/account_repo.dart';
 import 'package:lemmy_account_sync/repository/comunity_repo.dart';
+import 'package:lemmy_account_sync/util/credential_utils.dart';
 import 'package:lemmy_account_sync/util/db.dart';
 import 'package:lemmy_account_sync/util/lemmy.dart';
 import 'package:lemmy_account_sync/util/logger.dart';
@@ -104,7 +105,7 @@ class SyncMotor {
     Lemmy lemmyClient = Lemmy(acc.instance);
 
     String? password =
-        await storage.read(key: '${acc.username}@${acc.instance}');
+        await CredentialUtils.get("${acc.username}@${acc.instance}");
     if (password == null || password.isEmpty) {
       Logger.error(
           "Unable to retrieve password for account ${acc.username}@${acc.instance}");
