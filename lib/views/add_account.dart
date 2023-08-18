@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:lemmy_account_sync/model/account.dart';
-import 'package:lemmy_account_sync/model/person_view.dart';
-import 'package:lemmy_account_sync/repository/account_repo.dart';
-import 'package:lemmy_account_sync/util/credential_utils.dart';
-import 'package:lemmy_account_sync/util/db.dart';
-import 'package:lemmy_account_sync/util/lemmy.dart';
+import 'package:lemmy_handshake/model/account.dart';
+import 'package:lemmy_handshake/model/person_view.dart';
+import 'package:lemmy_handshake/repository/account_repo.dart';
+import 'package:lemmy_handshake/util/credential_utils.dart';
+import 'package:lemmy_handshake/util/db.dart';
+import 'package:lemmy_handshake/util/lemmy.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:lemmy_account_sync/util/scaffold_message.dart';
-import 'package:lemmy_account_sync/util/sync_motor.dart';
+import 'package:lemmy_handshake/util/scaffold_message.dart';
+import 'package:lemmy_handshake/util/sync_motor.dart';
 
 class AddAccount extends StatefulWidget {
   const AddAccount({Key? key}) : super(key: key);

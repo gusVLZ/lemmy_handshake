@@ -1,4 +1,4 @@
-package dev.gusvlz.lemmy_account_sync
+package dev.gusvlz.lemmy_handshake
 
 import io.flutter.embedding.android.FlutterActivity
 

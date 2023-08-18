@@ -1,7 +1,6 @@
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:lemmy_account_sync/service/notification_service.dart';
-import 'package:lemmy_account_sync/util/logger.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:lemmy_handshake/service/notification_service.dart';
+import 'package:lemmy_handshake/util/logger.dart';
+import 'package:lemmy_handshake/util/sync_motor.dart';
 import 'package:workmanager/workmanager.dart';
 
 class WorkService {
@@ -9,38 +8,37 @@ class WorkService {
     Workmanager().initialize(callbackDispatcher);
 
     Logger.info("Registering background services");
-    Workmanager().registerPeriodicTask("task-identifier", "simplePeriodicTask",
-        constraints: Constraints(networkType: NetworkType.connected));
-    Workmanager().registerOneOffTask("task-test", "notificationTest",
-        initialDelay: const Duration(seconds: 5));
+    Workmanager().registerPeriodicTask("sync-task", "syncTask",
+        //constraints: Constraints(networkType: NetworkType.connected),
+        initialDelay: const Duration(minutes: 1),
+        frequency: const Duration(minutes: 15)); //6 times per day
   }
 
   static Future<bool> taskLogicExecutor(
       String task, Map<String, dynamic>? inputData) async {
     Logger.info("Native called background task: $task");
+    switch (task) {
+      case "syncTask":
+        try {
+          var notificationClient = NotificationService.initialize();
+          NotificationService.showSyncingNotification(notificationClient);
 
-    int totalExecutions = 0;
-    final sharedPreference = await SharedPreferences.getInstance();
+          var syncMotor = await SyncMotor.createAsync();
+          var result = await syncMotor.syncAccounts();
 
-    try {
-      totalExecutions = sharedPreference.getInt("totalExecutions") ?? 0;
-      sharedPreference.setInt("totalExecutions", totalExecutions + 1);
+          NotificationService.hideNotification(notificationClient, 0);
 
-      FlutterLocalNotificationsPlugin notificationClient =
-          FlutterLocalNotificationsPlugin();
-
-      var android = const AndroidInitializationSettings('@mipmap/ic_launcher');
-      var iOS = const DarwinInitializationSettings();
-
-      var settings = InitializationSettings(android: android, iOS: iOS);
-      notificationClient.initialize(settings);
-      NotificationService.showNotificationWithDefaultSound(
-        notificationClient,
-        totalExecutions,
-      );
-    } catch (err) {
-      Logger.error(err.toString());
-      throw Exception(err);
+          if (result.hasContent()) {
+            NotificationService.showSyncResultNotification(notificationClient,
+                subscribed: result.added.length,
+                unsubscribed: result.added.length);
+          }
+        } catch (err) {
+          Logger.error(err.toString());
+          throw Exception(err);
+        }
+        break;
+      default:
     }
 
     return Future.value(true);

@@ -1,9 +1,9 @@
 import 'package:http/http.dart';
-import 'package:lemmy_account_sync/dto/sync_response.dart';
-import 'package:lemmy_account_sync/model/person_view.dart';
+import 'package:lemmy_handshake/dto/sync_response.dart';
+import 'package:lemmy_handshake/model/person_view.dart';
 import 'dart:convert';
 
-import 'package:lemmy_account_sync/util/logger.dart'; // For JSON parsing
+import 'package:lemmy_handshake/util/logger.dart'; // For JSON parsing
 
 class Lemmy {
   static const String _apiVersion = "v3";

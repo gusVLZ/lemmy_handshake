@@ -1,4 +1,4 @@
-name: lemmy_account_sync
+name: lemmy_handshake
 description: Mobile tool to synchronize multiple lemmy accounts across instances
 
 publish_to: 'none'

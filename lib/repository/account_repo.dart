@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:lemmy_account_sync/model/account.dart';
-import 'package:lemmy_account_sync/util/logger.dart';
+import 'package:lemmy_handshake/model/account.dart';
+import 'package:lemmy_handshake/util/logger.dart';
 import 'package:sqflite/sqflite.dart';
 
 class AccountRepo {

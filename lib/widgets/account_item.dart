@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get_time_ago/get_time_ago.dart';
-import 'package:lemmy_account_sync/model/account.dart';
-import 'package:lemmy_account_sync/repository/account_repo.dart';
-import 'package:lemmy_account_sync/util/db.dart';
-import 'package:lemmy_account_sync/widgets/confirmation.dart';
+import 'package:lemmy_handshake/model/account.dart';
+import 'package:lemmy_handshake/repository/account_repo.dart';
+import 'package:lemmy_handshake/util/db.dart';
+import 'package:lemmy_handshake/widgets/confirmation.dart';
 
 class AccountItem extends StatelessWidget {
   final Account account;

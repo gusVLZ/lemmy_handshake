@@ -1,4 +1,4 @@
-import 'package:lemmy_account_sync/model/community.dart';
+import 'package:lemmy_handshake/model/community.dart';
 import 'package:sqflite/sqflite.dart';
 
 class CommunityRepo {

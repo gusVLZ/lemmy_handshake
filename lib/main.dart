@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
-import 'package:lemmy_account_sync/service/work_service.dart';
-import 'package:lemmy_account_sync/views/add_account.dart';
-import 'package:lemmy_account_sync/views/home.dart';
-import 'package:lemmy_account_sync/views/sync_accounts.dart';
+import 'package:lemmy_handshake/service/work_service.dart';
+import 'package:lemmy_handshake/views/add_account.dart';
+import 'package:lemmy_handshake/views/home.dart';
+import 'package:lemmy_handshake/views/sync_accounts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:workmanager/workmanager.dart';
@@ -48,7 +48,7 @@ class MyApp extends StatelessWidget {
     return DynamicColorBuilder(
       builder: (lightColorScheme, darkColorScheme) {
         return MaterialApp(
-          title: 'Lemmy Account Sync',
+          title: 'Lemmy Handshake',
           theme: ThemeData(
             colorScheme: lightColorScheme ?? _defaultLightColorScheme,
             useMaterial3: true,

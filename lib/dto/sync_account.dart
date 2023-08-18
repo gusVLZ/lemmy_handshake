@@ -1,4 +1,4 @@
-import 'package:lemmy_account_sync/model/account.dart';
+import 'package:lemmy_handshake/model/account.dart';
 
 class SyncAccount {
   final Account account;

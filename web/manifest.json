@@ -1,6 +1,6 @@
 {
-    "name": "Lemmy Account Sync",
-    "short_name": "Lemmy Account Sync",
+    "name": "Lemmy Handshake",
+    "short_name": "Handshake",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

@@ -23,4 +23,18 @@ class SyncResponse {
       'when': when.toIso8601String(),
     };
   }
+
+  bool hasContent() {
+    if (added.isNotEmpty || removed.isNotEmpty) {
+      return true;
+    }
+    return false;
+  }
+
+  bool hasError() {
+    if (failedToAdd.isNotEmpty || failedToRemove.isNotEmpty) {
+      return true;
+    }
+    return false;
+  }
 }

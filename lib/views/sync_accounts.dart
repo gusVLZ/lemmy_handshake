@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:lemmy_account_sync/util/sync_motor.dart';
+import 'package:lemmy_handshake/util/sync_motor.dart';
 
 class SyncAccounts extends StatefulWidget {
   const SyncAccounts({Key? key}) : super(key: key);

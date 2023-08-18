@@ -1,15 +1,15 @@
 import 'dart:convert';
 
-import 'package:lemmy_account_sync/dto/sync_account.dart';
-import 'package:lemmy_account_sync/dto/sync_response.dart';
-import 'package:lemmy_account_sync/model/account.dart';
-import 'package:lemmy_account_sync/model/community.dart';
-import 'package:lemmy_account_sync/repository/account_repo.dart';
-import 'package:lemmy_account_sync/repository/comunity_repo.dart';
-import 'package:lemmy_account_sync/util/credential_utils.dart';
-import 'package:lemmy_account_sync/util/db.dart';
-import 'package:lemmy_account_sync/util/lemmy.dart';
-import 'package:lemmy_account_sync/util/logger.dart';
+import 'package:lemmy_handshake/dto/sync_account.dart';
+import 'package:lemmy_handshake/dto/sync_response.dart';
+import 'package:lemmy_handshake/model/account.dart';
+import 'package:lemmy_handshake/model/community.dart';
+import 'package:lemmy_handshake/repository/account_repo.dart';
+import 'package:lemmy_handshake/repository/comunity_repo.dart';
+import 'package:lemmy_handshake/util/credential_utils.dart';
+import 'package:lemmy_handshake/util/db.dart';
+import 'package:lemmy_handshake/util/lemmy.dart';
+import 'package:lemmy_handshake/util/logger.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -37,9 +37,17 @@ class SyncMotor {
     }
   }
 
-  Future<void> syncAccounts() async {
+  Future<SyncResponse> syncAccounts() async {
     List<Account> accounts =
         await AccountRepo(dbConnection: _dbConnection).getAll();
+
+    var finalResult = SyncResponse(
+        accountId: "0",
+        added: [],
+        failedToAdd: [],
+        failedToRemove: [],
+        removed: [],
+        when: DateTime.now());
 
     for (var acc in accounts) {
       await syncOnlineToLocal(acc);
@@ -83,13 +91,21 @@ class SyncMotor {
       for (var url in toAdd) {
         progress++;
         callLogHandler("Following $url - ($progress/${toAdd.length})");
-        if (!await lemmy.subscribe(url)) callLogHandler("Couldn't subscribe");
+        if (await lemmy.subscribe(url)) {
+          finalResult.added.add(url);
+        } else {
+          finalResult.failedToAdd.add(url);
+          callLogHandler("Couldn't subscribe");
+        }
       }
       progress = 0;
       for (var url in toRemove) {
         progress++;
         callLogHandler("Unfollowing $url - ($progress/${toRemove.length})");
-        if (!await lemmy.subscribe(url, follow: false)) {
+        if (await lemmy.subscribe(url, follow: false)) {
+          finalResult.removed.add(url);
+        } else {
+          finalResult.failedToRemove.add(url);
           callLogHandler("Couldn't unsubscribe");
         }
       }
@@ -100,6 +116,8 @@ class SyncMotor {
       await syncOnlineToLocal(acc);
       await AccountRepo(dbConnection: _dbConnection).updateLastSync(acc.id!);
     }
+
+    return finalResult;
   }
 
   Future<SyncResponse> syncOnlineToLocal(Account acc,
