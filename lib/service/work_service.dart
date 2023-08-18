@@ -35,7 +35,9 @@ class WorkService {
       var settings = InitializationSettings(android: android, iOS: iOS);
       notificationClient.initialize(settings);
       NotificationService.showNotificationWithDefaultSound(
-          notificationClient, totalExecutions);
+        notificationClient,
+        totalExecutions,
+      );
     } catch (err) {
       Logger.error(err.toString());
       throw Exception(err);

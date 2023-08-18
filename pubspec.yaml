@@ -15,7 +15,6 @@ dependencies:
   sqflite: ^2.0.0
   path: ^1.8.0
   intl: ^0.17.0  
-
   cupertino_icons: ^1.0.2
   sqflite_common_ffi: ^2.2.5
   http: ^0.13.5
@@ -31,15 +30,14 @@ dependencies:
 
 dev_dependencies:
   flutter_test:
-    sdk: flutter  
+    sdk: flutter
+
   flutter_launcher_icons: ^0.13.1
   flutter_lints: ^2.0.0
 flutter_icons:
-  image_path: "assets/handshake_logo.png" 
+  image_path: "assets/handshake_logo.png"
   android: true
   ios: true
-  # optionally, as transparency is not allowed on app store
-  # remove_alpha_ios: true
 flutter:
   uses-material-design: true
 

@@ -83,13 +83,15 @@ class SyncMotor {
       for (var url in toAdd) {
         progress++;
         callLogHandler("Following $url - ($progress/${toAdd.length})");
-        await lemmy.subscribe(url);
+        if (!await lemmy.subscribe(url)) callLogHandler("Couldn't subscribe");
       }
       progress = 0;
       for (var url in toRemove) {
         progress++;
         callLogHandler("Unfollowing $url - ($progress/${toRemove.length})");
-        await lemmy.subscribe(url, follow: false);
+        if (!await lemmy.subscribe(url, follow: false)) {
+          callLogHandler("Couldn't unsubscribe");
+        }
       }
     }
 
