@@ -46,6 +46,9 @@ dependencies:
   get_time_ago: ^1.1.8
   dynamic_color: ^1.5.4
   flutter_windows_vault: ^1.0.1
+  workmanager: ^0.5.1
+  shared_preferences: ^2.2.0
+  flutter_local_notifications: ^15.1.0+1
 
 dev_dependencies:
   flutter_test:
