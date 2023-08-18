@@ -6,13 +6,13 @@ import 'package:workmanager/workmanager.dart';
 
 class WorkService {
   static void initialize(Function callbackDispatcher) {
-    Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
+    Workmanager().initialize(callbackDispatcher);
 
     Logger.info("Registering background services");
     Workmanager().registerPeriodicTask("task-identifier", "simplePeriodicTask",
         constraints: Constraints(networkType: NetworkType.connected));
     Workmanager().registerOneOffTask("task-test", "notificationTest",
-        initialDelay: const Duration(seconds: 30));
+        initialDelay: const Duration(seconds: 5));
   }
 
   static Future<bool> taskLogicExecutor(

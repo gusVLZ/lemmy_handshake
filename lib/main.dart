@@ -5,6 +5,7 @@ import 'package:lemmy_account_sync/service/work_service.dart';
 import 'package:lemmy_account_sync/views/add_account.dart';
 import 'package:lemmy_account_sync/views/home.dart';
 import 'package:lemmy_account_sync/views/sync_accounts.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:workmanager/workmanager.dart';
 
@@ -15,8 +16,14 @@ void callbackDispatcher() {
   });
 }
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Permission.notification.isDenied.then((value) {
+    if (value) {
+      Permission.notification.request();
+    }
+  });
 
   sqfliteFfiInit();
   if (Platform.isWindows) {
