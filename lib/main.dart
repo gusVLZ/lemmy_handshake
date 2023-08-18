@@ -19,18 +19,17 @@ void callbackDispatcher() {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Permission.notification.isDenied.then((value) {
-    if (value) {
-      Permission.notification.request();
-    }
-  });
-
   sqfliteFfiInit();
   if (Platform.isWindows) {
     databaseFactory = databaseFactoryFfi;
+  } else {
+    await Permission.notification.isDenied.then((value) {
+      if (value) {
+        Permission.notification.request();
+      }
+    });
+    WorkService.initialize(callbackDispatcher);
   }
-
-  WorkService.initialize(callbackDispatcher);
 
   runApp(const MyApp());
 }

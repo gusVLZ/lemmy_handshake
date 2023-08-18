@@ -36,7 +36,7 @@ class NotificationService {
     }
 
     var androidPlatformChannelSpecifics = AndroidNotificationDetails(
-        'lemmy_handshake_result', 'Synchronization result',
+        'lemmy_sync_result', 'Synchronization result',
         importance: Importance.defaultImportance,
         priority: Priority.defaultPriority,
         styleInformation: BigTextStyleInformation(notificationText));
@@ -49,7 +49,7 @@ class NotificationService {
 
     await notificationClient.show(
       1,
-      'Lemmy Handshakehronization',
+      'Lemmy Handshake',
       "",
       platformChannelSpecifics,
       payload: 'Default_Sound',
@@ -59,7 +59,7 @@ class NotificationService {
   static Future showSyncingNotification(
       FlutterLocalNotificationsPlugin notificationClient) async {
     var androidPlatformChannelSpecifics = const AndroidNotificationDetails(
-        'lemmy_handshake', 'Synchronization of Lemmy Accounts',
+        'lemmy_sync', 'Synchronization of Lemmy Accounts',
         importance: Importance.low,
         priority: Priority.low,
         autoCancel: true,
@@ -71,9 +71,10 @@ class NotificationService {
     var platformChannelSpecifics = NotificationDetails(
         android: androidPlatformChannelSpecifics,
         iOS: iOSPlatformChannelSpecifics);
+
     await notificationClient.show(
       0,
-      'Lemmy Handshakehronization',
+      'Lemmy Handshake',
       "Syncing...",
       platformChannelSpecifics,
     );

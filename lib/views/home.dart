@@ -70,18 +70,18 @@ class _MyHomePageState extends State<MyHomePage> {
                                     onDelete: refreshAccounts,
                                   ))
                               .toList(),
-                          OutlinedButton(
-                              onPressed: (() => Navigator.of(context)
+                          const SizedBox(
+                            height: 30,
+                          ),
+                          SizedBox(
+                            width: 30,
+                            child: FilledButton(
+                              onPressed: () => Navigator.of(context)
                                   .pushNamed("sync_accounts")
-                                  .then((value) => refreshAccounts())),
-                              child: const Text("Sync")),
-                          OutlinedButton(
-                              onPressed: () {
-                                Db()
-                                    .purgeDataBase()
-                                    .then((value) => refreshAccounts());
-                              },
-                              child: const Text("DELETE DB"))
+                                  .then((value) => refreshAccounts()),
+                              child: const Text("Sync"),
+                            ),
+                          ),
                         ],
                       ),
               ))),
