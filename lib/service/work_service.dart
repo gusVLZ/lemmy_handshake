@@ -29,9 +29,11 @@ class WorkService {
           NotificationService.hideNotification(notificationClient, 0);
 
           if (result.hasContent()) {
-            NotificationService.showSyncResultNotification(notificationClient,
-                subscribed: result.added.length,
-                unsubscribed: result.added.length);
+            NotificationService.showSyncResultNotification(
+              notificationClient,
+              subscribed: result.added.length,
+              unsubscribed: result.removed.length,
+            );
           }
         } catch (err) {
           Logger.error(err.toString());
