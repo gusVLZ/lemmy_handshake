@@ -49,6 +49,12 @@ class _MyHomePageState extends State<MyHomePage> {
         title: const Text(
           "Lemmy Handshake",
         ),
+        actions: [
+          IconButton(
+            onPressed: () => Navigator.of(context).pushNamed("settings"),
+            icon: const Icon(Icons.settings),
+          )
+        ],
         backgroundColor: Theme.of(context).colorScheme.background,
       ),
       backgroundColor: Theme.of(context).colorScheme.background,

@@ -18,10 +18,8 @@ class AddAccount extends StatefulWidget {
 
 class AddAccountState extends State<AddAccount> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _instanceController =
-      TextEditingController(text: "sh.itjust.works");
-  final TextEditingController _usernameController =
-      TextEditingController(text: "gusVLZ");
+  final TextEditingController _instanceController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   final storage = const FlutterSecureStorage();

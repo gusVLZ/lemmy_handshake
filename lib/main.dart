@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:lemmy_handshake/service/work_service.dart';
 import 'package:lemmy_handshake/views/add_account.dart';
 import 'package:lemmy_handshake/views/home.dart';
+import 'package:lemmy_handshake/views/settings.dart';
 import 'package:lemmy_handshake/views/sync_accounts.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:workmanager/workmanager.dart';
 
@@ -19,16 +21,27 @@ void callbackDispatcher() {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  var shared = await SharedPreferences.getInstance();
+
   sqfliteFfiInit();
   if (Platform.isWindows) {
     databaseFactory = databaseFactoryFfi;
   } else {
     await Permission.notification.isDenied.then((value) {
       if (value) {
-        Permission.notification.request();
+        Permission.notification
+            .request()
+            .then((p) => shared.setBool("is_notification_active", p.isGranted));
       }
     });
     WorkService.initialize(callbackDispatcher);
+  }
+
+  if (shared.getBool("is_never_initialized") == null) {
+    shared.setBool("is_notification_active", false);
+    shared.setBool("is_unfollow_allowed", false);
+    shared.setBool("is_background_active", true);
+    shared.setBool("is_never_initialized", false);
   }
 
   runApp(const MyApp());
@@ -61,7 +74,8 @@ class MyApp extends StatelessWidget {
           routes: {
             "home": (context) => const MyHomePage(),
             "add_account": (context) => const AddAccount(),
-            "sync_accounts": (context) => const SyncAccounts()
+            "sync_accounts": (context) => const SyncAccounts(),
+            "settings": (context) => const Settings()
           },
           debugShowCheckedModeBanner: false,
         );
