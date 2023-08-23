@@ -71,6 +71,7 @@ class Lemmy {
         });
       } catch (err) {
         Logger.error("error: $err");
+        rethrow;
       }
     }
 

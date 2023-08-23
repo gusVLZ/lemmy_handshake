@@ -10,6 +10,7 @@ import 'package:lemmy_handshake/util/credential_utils.dart';
 import 'package:lemmy_handshake/util/db.dart';
 import 'package:lemmy_handshake/util/lemmy.dart';
 import 'package:lemmy_handshake/util/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -38,6 +39,10 @@ class SyncMotor {
   }
 
   Future<SyncResponse> syncAccounts() async {
+    var shared = await SharedPreferences.getInstance();
+    var isUnfollowAllowed = shared.getBool("is_unfollow_allowed") != null &&
+        shared.getBool("is_unfollow_allowed")!;
+
     List<Account> accounts =
         await AccountRepo(dbConnection: _dbConnection).getAll();
 
@@ -50,7 +55,12 @@ class SyncMotor {
         when: DateTime.now());
 
     for (var acc in accounts) {
-      await syncOnlineToLocal(acc);
+      try {
+        await syncOnlineToLocal(acc);
+      } catch (e) {
+        callLogHandler(e.toString());
+        continue;
+      }
     }
 
     for (var acc in accounts) {
@@ -59,6 +69,7 @@ class SyncMotor {
       if (!loginResult) {
         callLogHandler(
             "Login failed for account ${acc.username}@${acc.instance}");
+        continue;
       }
 
       var localUpdates = await CommunityRepo(dbConnection: _dbConnection)
@@ -84,8 +95,10 @@ class SyncMotor {
           .map((e) => e['community'].toString())
           .toList();
 
-      callLogHandler(
-          "${acc.username}@${acc.instance} - Sync will subscribe to ${toAdd.length} communities, and unsubscribe from ${toRemove.length} communities");
+      if ((toAdd.isNotEmpty || toRemove.isNotEmpty) && isUnfollowAllowed) {
+        callLogHandler(
+            "${acc.username}@${acc.instance} - Sync will subscribe to ${toAdd.length} communities, and unsubscribe from ${toRemove.length} communities");
+      }
 
       var progress = 0;
       for (var url in toAdd) {
@@ -99,21 +112,27 @@ class SyncMotor {
         }
       }
       progress = 0;
-      for (var url in toRemove) {
-        progress++;
-        callLogHandler("Unfollowing $url - ($progress/${toRemove.length})");
-        if (await lemmy.subscribe(url, follow: false)) {
-          finalResult.removed.add(url);
-        } else {
-          finalResult.failedToRemove.add(url);
-          callLogHandler("Couldn't unsubscribe");
+      if (isUnfollowAllowed) {
+        for (var url in toRemove) {
+          progress++;
+          callLogHandler("Unfollowing $url - ($progress/${toRemove.length})");
+          if (await lemmy.subscribe(url, follow: false)) {
+            finalResult.removed.add(url);
+          } else {
+            finalResult.failedToRemove.add(url);
+            callLogHandler("Couldn't unsubscribe");
+          }
         }
       }
     }
 
+    callLogHandler("Saving sync changes");
     for (var acc in accounts) {
-      callLogHandler("Saving sync changes");
-      await syncOnlineToLocal(acc);
+      try {
+        await syncOnlineToLocal(acc);
+      } catch (e) {
+        continue;
+      }
       await AccountRepo(dbConnection: _dbConnection).updateLastSync(acc.id!);
     }
 
@@ -141,13 +160,23 @@ class SyncMotor {
     var loginResult = await lemmyClient.login(acc.username, acc.password!);
     if (!loginResult) {
       callLogHandler(
-          "Login failed for account ${acc.username}@${acc.instance}");
+          "Login failed for account ${acc.username}@${acc.instance}, did you changed the password?");
+      throw Exception(
+          "Login failed for account ${acc.username}@${acc.instance}, did you changed the password?");
     }
     CommunityRepo communityRepo = CommunityRepo(dbConnection: _dbConnection);
 
     callLogHandler(
         "Fetching remote communities from ${acc.username}@${acc.instance}");
-    var onlineCommunities = await lemmyClient.getCommunities();
+    List<String> onlineCommunities = [];
+    try {
+      onlineCommunities = await lemmyClient.getCommunities();
+    } catch (e) {
+      callLogHandler(
+          "Couldn't retrieve communities from ${acc.username}@${acc.instance}");
+      throw Exception(
+          "Couldn't retrieve communities from ${acc.username}@${acc.instance}");
+    }
 
     var localCommunities = await communityRepo
         .getAllFromAccount(acc.id!, acc.lastSync ?? DateTime.now())

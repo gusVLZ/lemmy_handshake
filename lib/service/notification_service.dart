@@ -1,7 +1,17 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationService {
-  static FlutterLocalNotificationsPlugin initialize() {
+  SharedPreferences? shared;
+  NotificationService(SharedPreferences sharedPreferences) {
+    shared = sharedPreferences;
+  }
+
+  static create() async {
+    return NotificationService(await SharedPreferences.getInstance());
+  }
+
+  FlutterLocalNotificationsPlugin initialize() {
     FlutterLocalNotificationsPlugin notificationClient =
         FlutterLocalNotificationsPlugin();
 
@@ -14,7 +24,7 @@ class NotificationService {
     return notificationClient;
   }
 
-  static Future showSyncResultNotification(
+  Future showSyncResultNotification(
     FlutterLocalNotificationsPlugin notificationClient, {
     int? subscribed,
     int? unsubscribed,
@@ -47,16 +57,19 @@ class NotificationService {
         android: androidPlatformChannelSpecifics,
         iOS: iOSPlatformChannelSpecifics);
 
-    await notificationClient.show(
-      1,
-      'Lemmy Handshake',
-      "",
-      platformChannelSpecifics,
-      payload: 'Default_Sound',
-    );
+    if (shared?.getBool("is_notification_active") != null &&
+        shared!.getBool("is_notification_active")!) {
+      await notificationClient.show(
+        1,
+        'Lemmy Handshake',
+        "",
+        platformChannelSpecifics,
+        payload: 'Default_Sound',
+      );
+    }
   }
 
-  static Future showSyncingNotification(
+  Future showSyncingNotification(
       FlutterLocalNotificationsPlugin notificationClient) async {
     var androidPlatformChannelSpecifics = const AndroidNotificationDetails(
         'lemmy_sync', 'Synchronization of Lemmy Accounts',
@@ -71,18 +84,22 @@ class NotificationService {
     var platformChannelSpecifics = NotificationDetails(
         android: androidPlatformChannelSpecifics,
         iOS: iOSPlatformChannelSpecifics);
-
-    await notificationClient.show(
-      0,
-      'Lemmy Handshake',
-      "Syncing...",
-      platformChannelSpecifics,
-    );
+    if (shared?.getBool("is_notification_active") != null &&
+        shared!.getBool("is_notification_active")!) {
+      await notificationClient.show(
+        0,
+        'Lemmy Handshake',
+        "Syncing...",
+        platformChannelSpecifics,
+      );
+    }
   }
 
-  static Future hideNotification(
-      FlutterLocalNotificationsPlugin notificationClient,
+  Future hideNotification(FlutterLocalNotificationsPlugin notificationClient,
       int notificationId) async {
-    notificationClient.cancel(notificationId);
+    if (shared?.getBool("is_notification_active") != null &&
+        shared!.getBool("is_notification_active")!) {
+      notificationClient.cancel(notificationId);
+    }
   }
 }
