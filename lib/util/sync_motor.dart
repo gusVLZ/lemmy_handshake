@@ -160,9 +160,9 @@ class SyncMotor {
     var loginResult = await lemmyClient.login(acc.username, acc.password!);
     if (!loginResult) {
       callLogHandler(
-          "Login failed for account ${acc.username}@${acc.instance}, did you changed the password?");
+          "Login failed for account ${acc.username}@${acc.instance}, have you changed the password?");
       throw Exception(
-          "Login failed for account ${acc.username}@${acc.instance}, did you changed the password?");
+          "Login failed for account ${acc.username}@${acc.instance}, have you changed the password?");
     }
     CommunityRepo communityRepo = CommunityRepo(dbConnection: _dbConnection);
 
