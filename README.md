@@ -36,3 +36,61 @@ I'm doing this with flutter because of the compatibility across plataforms, for 
    - lemonadebunny@lemmy.ca who gave great UI advices when I was struggling over the app design
    - Oha@feddit.de who suggested using Material You 
    - naticus@lemmy.world and Rouxibeau@lemmy.world who suggested renaming the app from sync to handshake
+
+---
+---
+
+## How to contribute:
+
+
+### Prerequisites
+
+Before you begin, ensure that you have the following software installed on your system:
+
+1. **Flutter SDK**: Flutter is a requirement for building Android apps using Flutter. You can install it by following the instructions on the official Flutter website: [Flutter Installation Guide](https://flutter.dev/docs/get-started/install)
+
+2. **Android Studio**: Android Studio is the preferred IDE for Flutter development as it offers excellent tools for Android app development. Download and install Android Studio from the official website: [Android Studio Download](https://developer.android.com/studio)
+
+3. **Device or Emulator**: You can use a physical Android device or an Android emulator provided by Android Studio for testing your Flutter app.
+
+### Getting Started
+
+1. **Clone the Repository**: Clone or download the Flutter Android project repository to your local machine.
+
+   ```
+   git clone https://github.com/gusVLZ/lemmy_handshake.git
+   ```
+
+2. **Open the Project**: Open Android Studio and select "Open an existing Android Studio project." Navigate to the directory where you cloned the repository and open the `android` subfolder as the project.
+
+3. **Install Dependencies**: Flutter projects require external packages and dependencies. Open a terminal in the project's root directory and run:
+
+   ```
+   flutter pub get
+   ```
+
+### Running the Project
+
+#### Using Android Studio
+
+1. In Android Studio, ensure that you have a target device or emulator set up and running. You can create and configure virtual devices via the AVD Manager.
+
+2. Click the "Run" button (green play icon) in the top menu or use the keyboard shortcut `Shift` + `F10` (Windows/Linux) or `Control` + `R` (macOS) to build and run the Flutter Android app on the selected device/emulator.
+
+#### Using the Command Line
+
+You can also run your Flutter Android project using the command line:
+
+1. Open a terminal in the project's root directory.
+
+2. To list available devices and emulators, run:
+
+   ```
+   flutter devices
+   ```
+
+3. Choose a device or emulator from the list and run the app:
+
+   ```
+   flutter run -d <device_name>
+   ```
