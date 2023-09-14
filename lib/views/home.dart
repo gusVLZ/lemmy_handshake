@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:lemmy_handshake/model/account.dart';
 import 'package:lemmy_handshake/repository/account_repo.dart';
@@ -49,12 +51,14 @@ class _MyHomePageState extends State<MyHomePage> {
         title: const Text(
           "Lemmy Handshake",
         ),
-        actions: [
-          IconButton(
-            onPressed: () => Navigator.of(context).pushNamed("settings"),
-            icon: const Icon(Icons.settings),
-          )
-        ],
+        actions: Platform.isWindows
+            ? []
+            : [
+                IconButton(
+                  onPressed: () => Navigator.of(context).pushNamed("settings"),
+                  icon: const Icon(Icons.settings),
+                )
+              ],
         backgroundColor: Theme.of(context).colorScheme.background,
       ),
       backgroundColor: Theme.of(context).colorScheme.background,
